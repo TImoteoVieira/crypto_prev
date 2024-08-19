@@ -51,7 +51,7 @@ def predict_future_prices_polynomial(data, days_ahead, degree=2):
     return future_data
 
 def plot_trend_with_prediction_polynomial(data, period, degree=2):
-    days_selected_map = {'5d': 5, '1 mês': 30, '3 meses': 90, '1 ano': 365, '2 anos': 731, '5 anos': 1827}
+    days_selected_map = {'5 dias': 5, '1 mês': 30, '3 meses': 90, '1 ano': 365, '2 anos': 731, '5 anos': 1827}
     days_selected = days_selected_map[period]
     
     data_filtered = data.iloc[-days_selected:]
