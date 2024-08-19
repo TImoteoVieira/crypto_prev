@@ -7,12 +7,17 @@ import streamlit as st
 import plotly.graph_objs as go
 
 def load_data(ticker):
-    data = yf.download(ticker, period='max')
-    if data.empty:
-        st.error("Os dados não foram carregados corretamente. Verifique o ticker e tente novamente.")
+    try:
+        # Desativando a barra de progresso ao fazer o download dos dados
+        data = yf.download(ticker, period='max', progress=False)
+        if data.empty:
+            st.error("Os dados não foram carregados corretamente. Verifique o ticker e tente novamente.")
+            return None
+        data = data.reset_index()  # Resetando o índice para criar a coluna 'Date'
+        return data
+    except Exception as e:
+        st.error(f"Erro ao carregar os dados: {str(e)}")
         return None
-    data = data.reset_index()  # Resetando o índice para criar a coluna 'Date'
-    return data
 
 def predict_future_prices_polynomial(data, days_ahead, degree=2):
     if data is None or data.empty:
