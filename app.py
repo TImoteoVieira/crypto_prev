@@ -8,15 +8,14 @@ import plotly.graph_objs as go
 
 def load_data(ticker):
     try:
-        # Desativando a barra de progresso ao fazer o download dos dados
         data = yf.download(ticker, period='max', progress=False)
         if data.empty:
-            st.error("Os dados não foram carregados corretamente. Verifique o ticker e tente novamente.")
+            st.error("The data was not loaded correctly. Please check the ticker and try again.")
             return None
-        data = data.reset_index()  # Resetando o índice para criar a coluna 'Date'
+        data = data.reset_index()
         return data
     except Exception as e:
-        st.error(f"Erro ao carregar os dados: {str(e)}")
+        st.error(f"Error loading data: {str(e)}")
         return None
 
 def predict_future_prices_polynomial(data, days_ahead, degree=2):
@@ -28,21 +27,18 @@ def predict_future_prices_polynomial(data, days_ahead, degree=2):
     X = data[['Day']]
     y = data['Close']
     
-    # Normalizar os dados
     scaler_X = StandardScaler()
     scaler_y = StandardScaler()
     
     X_scaled = scaler_X.fit_transform(X)
     y_scaled = scaler_y.fit_transform(y.values.reshape(-1, 1))
     
-    # Regressão polinomial
     poly = PolynomialFeatures(degree=degree)
     X_poly = poly.fit_transform(X_scaled)
     
     model = LinearRegression()
     model.fit(X_poly, y_scaled)
     
-    # Previsão dos próximos dias
     future_days = np.arange(len(data), len(data) + days_ahead).reshape(-1, 1)
     future_days_scaled = scaler_X.transform(future_days)
     future_days_poly = poly.transform(future_days_scaled)
@@ -58,7 +54,6 @@ def plot_trend_with_prediction_polynomial(data, period, degree=2):
     days_selected_map = {'5d': 5, '1mo': 30, '3mo': 90, '1y': 365, '2y': 731, '5y': 1827}
     days_selected = days_selected_map[period]
     
-    # Filtrar os últimos 'days_selected' dias e garantir que a coluna 'Date' esteja presente
     data_filtered = data.iloc[-days_selected:]
 
     future_data = predict_future_prices_polynomial(data, days_selected, degree)
@@ -66,43 +61,38 @@ def plot_trend_with_prediction_polynomial(data, period, degree=2):
     if future_data is None:
         return
     
-    # Criar um gráfico interativo com Plotly
     fig = go.Figure()
 
-    # Adicionar linha do preço histórico
     fig.add_trace(go.Scatter(
-        x=data_filtered['Date'], y=data_filtered['Close'],  # Usando a coluna 'Date' criada
-        mode='lines', name='Preço Histórico',
+        x=data_filtered['Date'], y=data_filtered['Close'],
+        mode='lines', name="Cryptocurrency Price Analysis",
         line=dict(color='blue')
     ))
 
-    # Adicionar linha da previsão futura
     fig.add_trace(go.Scatter(
         x=future_data['Date'], y=future_data['Predicted Close'],
-        mode='lines', name='Tendência Futura',
+        mode='lines', name="Choose the prediction period:",
         line=dict(color='orange', dash='dash')
     ))
 
-    # Configurar layout
     fig.update_layout(
-        title=f"Previsão de Preço para os Próximos {days_selected} Dias (Polinomial de Grau {degree})",
+        title=f"Prevision for next {days_selected} Dias",
         xaxis_title='Data',
-        yaxis_title='Preço (USD)',
+        yaxis_title='Price (USD)',
         hovermode='x unified',
         template='plotly_white',
         legend=dict(x=0, y=1, traceorder='normal')
     )
 
-    # Exibir gráfico no Streamlit
     st.plotly_chart(fig)
 
 # Streamlit app
-st.title('Análise de Preço de Criptomoedas')
-ticker = st.text_input("Digite o ticker da criptomoeda (ex: BTC-USD):", "BTC-USD")
-period = st.selectbox("Escolha o período de previsão:", ['5d', '1mo', '3mo', '1y', '2y', '5y'])
+st.title('Cryptography - Streamlit app')
+ticker = st.text_input("Enter the cryptocurrency ticker (e.g., BTC-USD):", "BTC-USD")
+period = st.selectbox("Choice period:", ['5d', '1mo', '3mo', '1y', '2y', '5y'])
 
-if st.button("Carregar Dados"):
+if st.button("Load Data"):
     data = load_data(ticker)
     if data is not None:
-        st.write("Dados carregados com sucesso!")
+        st.write("Load data sucess!")
         plot_trend_with_prediction_polynomial(data, period, degree=2)
